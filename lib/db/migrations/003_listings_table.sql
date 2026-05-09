@@ -1,0 +1,2 @@
+-- 003_listings_table.sql
+-- rental_listings table with geography(Point, 4326) + GIST index.
