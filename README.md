@@ -2,7 +2,7 @@
 
 AI-driven rent valuation platform for the Israeli market. Users enter apartment details and receive a fair market value, confidence tier, and a short Hebrew negotiation summary.
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the stack, folder layout, and contribution rules. **Read it before writing code.**
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the stack, folder layout, and contribution rules, and [`STACK.md`](./STACK.md) for the exact pinned versions. **Read both before writing code.**
 
 ## Stack
 
