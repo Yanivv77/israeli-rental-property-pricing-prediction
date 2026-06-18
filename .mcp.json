@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "data-gov-il": {
-      "command": "node",
-      "args": ["/abs/path/to/data-gov-il-mcp/stdio.js"]
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/davidosherproceed-data-gov-il-mcp"]
     }
   }
 }
