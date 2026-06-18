@@ -30,7 +30,25 @@ export type Resolution =
   | { kind: "ambiguous"; options: GeoCandidate[] }
   | { kind: "no-data"; address: Address };
 
-const { deals, gushSync, geoCache } = schema;
+const { deals, gushSync, geoCache, aiSummary } = schema;
+
+/** Cached Gemini narrative for an exact prompt hash, or null on a miss. */
+export async function getCachedSummary(key: string): Promise<string | null> {
+  const [row] = await getDb()
+    .select({ summary: aiSummary.summary })
+    .from(aiSummary)
+    .where(eq(aiSummary.id, key))
+    .limit(1);
+  return row?.summary ?? null;
+}
+
+/** Store a narrative under its prompt hash (idempotent). */
+export async function storeSummary(key: string, summary: string): Promise<void> {
+  await getDb()
+    .insert(aiSummary)
+    .values({ id: key, summary })
+    .onConflictDoNothing({ target: aiSummary.id });
+}
 
 const norm = (s: string) => s.trim().replace(/\s+/g, " ");
 

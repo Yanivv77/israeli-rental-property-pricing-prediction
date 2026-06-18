@@ -1,5 +1,7 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { GoogleGenAI } from "@google/genai";
+import { getCachedSummary, storeSummary } from "@/lib/cache/deals-cache";
 import { CBS_RENT, type RentEstimate } from "@/lib/rent/cbs";
 import type { Subject, ValuationStats } from "@/types/property";
 
@@ -72,17 +74,27 @@ export async function generateSummary(
   subject: Subject,
   rent: RentEstimate,
 ): Promise<string> {
+  const prompt = `הנתונים שכבר חושבו (השתמש אך ורק במספרים האלה, כפי שהם):\n${facts(stats, subject, rent)}\n\nכתוב הסבר קצר בעברית: האם המחיר המבוקש מוצדק? הסבר במילים, בלי לחשב מספרים חדשים.`;
+
+  // Content-addressed cache: the narrative is deterministic (temp 0), so an
+  // identical prompt reuses the stored text and makes ZERO Gemini calls.
+  const cacheKey = createHash("sha1").update(`${MODEL}\n${SYSTEM}\n${prompt}`).digest("hex");
+  const cached = await getCachedSummary(cacheKey);
+  if (cached) return cached;
+
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY not set");
 
   const ai = new GoogleGenAI({ apiKey: key });
   const res = await ai.models.generateContent({
     model: MODEL,
-    contents: `הנתונים שכבר חושבו (השתמש אך ורק במספרים האלה, כפי שהם):\n${facts(stats, subject, rent)}\n\nכתוב הסבר קצר בעברית: האם המחיר המבוקש מוצדק? הסבר במילים, בלי לחשב מספרים חדשים.`,
+    contents: prompt,
     config: { systemInstruction: SYSTEM, temperature: 0, maxOutputTokens: 400 },
   });
 
   const text = (res.text ?? "").trim();
   if (!text) throw new Error("Gemini returned empty narrative");
+
+  await storeSummary(cacheKey, text);
   return text;
 }

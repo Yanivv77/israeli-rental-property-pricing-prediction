@@ -55,6 +55,17 @@ export const geoCache = pgTable("geo_cache", {
   syncedAt: timestamp("synced_at").defaultNow().notNull(),
 });
 
+/**
+ * Cached Gemini narratives, content-addressed: the key is a hash of the exact
+ * prompt (model + system + computed numbers). The narrative is deterministic
+ * (temp 0), so an identical query reuses the text and makes ZERO LLM calls.
+ */
+export const aiSummary = pgTable("ai_summary", {
+  id: text("id").primaryKey(), // hash of the full prompt
+  summary: text("summary").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type DealRow = typeof deals.$inferSelect;
 export type NewDealRow = typeof deals.$inferInsert;
 export type GushSyncRow = typeof gushSync.$inferSelect;
