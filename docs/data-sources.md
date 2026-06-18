@@ -16,13 +16,20 @@ Verified **2026-06-18** against `https://www.govmap.gov.il/api`.
 
 ## Verified govmap endpoints (base `https://www.govmap.gov.il/api`)
 
-| Call | Method | Path | Status 2026-06-18 |
+| Call | Method | Path | Status 2026-06-18 (re-verified in prompt 03) |
 |---|---|---|---|
 | Autocomplete (address → point) | POST | `/search-service/autocomplete` | ✅ works (3040 results for "דיזנגוף 50 תל אביב") |
 | Deals-by-radius (polygon metadata + `dealscount`) | GET | `/real-estate/deals/{x},{y}/{radius}` | ✅ works (2 polygons, `dealscount:"30"`) |
-| Gush/helka by point | POST | `/layers-catalog/entitiesByPoint` | ⚠️ **HTTP 400** — drifted |
-| Street deal rows | GET | `/real-estate/street-deals/{polygon_id}` | ⚠️ **HTTP 500** ("Could not fetch street deals") |
-| Neighborhood deal rows | GET | `/real-estate/neighborhood-deals/{polygon_id}` | ⚠️ **HTTP 500** |
+| Gush/helka by point | POST | `/layers-catalog/entitiesByPoint` | ⚠️ **still HTTP 400** ("access denied") — NOT used |
+| Street deal rows | GET | `/real-estate/street-deals/{polygon_id}?limit=N` | ✅ **now works** — returns deal rows with `gushNum`/`parcelNum`/`assetArea`/`dealAmount`/`assetRoomNum`/`floorNo`/`dealDate`. `?limit=50` supported. |
+| Neighborhood deal rows | GET | `/real-estate/neighborhood-deals/{polygon_id}` | ✅ works (broader, spans many gushim) — not used; street-deals is tighter to the block |
+
+### How gush/helka is resolved (prompt 03)
+`entitiesByPoint` is still dead, so the block is **never** resolved by a point→gush
+call. Instead: autocomplete → point → deals-by-radius → building polygon → its
+`street-deals` rows, which **carry `gushNum`/`parcelNum`**. The subject's gush is the
+mode of the returned rows. This also means the deal fetch and the gush lookup are the
+same call (no wasted requests).
 
 Headers used: `Content-Type: application/json`, `User-Agent: NadlanMCP/1.0.0`.
 
@@ -43,7 +50,7 @@ Autocomplete `shape` comes back as `POINT(x y)` in **Web Mercator (EPSG:3857)** 
   - serve users computed stats + narrative, not bulk raw exports;
   - plan a **durable path**: the official Israel Tax Authority real-estate database or a formal data-access request.
 
-## Open items for prompt 03
-1. Re-derive the working **gush/helka** call (entitiesByPoint payload/CRS changed) or an alternative layer.
-2. Re-derive working **deal-row** retrieval (govmap deal-detail is 500ing): retry/alternative params, the direct nadlan REST with a session, or the official source.
-3. Implement throttling + cache-first reads honoring the limits above.
+## Open items for prompt 03 — RESOLVED
+1. ✅ **gush/helka**: derived from the deal rows (`gushNum`/`parcelNum`); `entitiesByPoint` is bypassed entirely.
+2. ✅ **deal-row retrieval**: `street-deals/{polygon_id}?limit=50` is live again and is the source. Cleaned + Zod-validated in `lib/deals/provider.ts`.
+3. ✅ **throttling + cache-first**: one global throttle + retry/backoff in `lib/gov/http.ts`; cache-first reads in `lib/cache/deals-cache.ts` (`geo_cache` for the address→block mapping, `gush_sync` + `deals` for the transactions). A repeat search makes zero gov calls.

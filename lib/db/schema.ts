@@ -18,6 +18,7 @@ export const deals = pgTable(
     id: text("id").primaryKey(), // stable hash of the deal (idempotent upsert)
     gush: integer("gush").notNull(),
     helka: integer("helka"),
+    polygonId: text("polygon_id"), // govmap building polygon → resolve gush from cache, skip a gov call
     address: text("address"),
     dealDate: timestamp("deal_date"),
     amount: integer("amount"), // ₪
@@ -26,12 +27,30 @@ export const deals = pgTable(
     floor: integer("floor"),
     fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
   },
-  (t) => [index("deals_gush_idx").on(t.gush)],
+  (t) => [
+    index("deals_gush_idx").on(t.gush),
+    index("deals_polygon_idx").on(t.polygonId),
+  ],
 );
 
 // freshness per block: when did we last pull this gush from gov?
 export const gushSync = pgTable("gush_sync", {
   gush: integer("gush").primaryKey(),
+  syncedAt: timestamp("synced_at").defaultNow().notNull(),
+});
+
+/**
+ * Address → resolved location cache. A gush mapping is permanent, so a repeat
+ * search of the same address resolves point/polygon/gush from here with ZERO
+ * gov calls (no geocode, no polygon lookup) — the "instant repeat search".
+ */
+export const geoCache = pgTable("geo_cache", {
+  addr: text("addr").primaryKey(), // normalized address string
+  x: real("x").notNull(), // EPSG:3857 point
+  y: real("y").notNull(),
+  polygonId: text("polygon_id"),
+  gush: integer("gush"),
+  helka: integer("helka"),
   syncedAt: timestamp("synced_at").defaultNow().notNull(),
 });
 

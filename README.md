@@ -18,15 +18,22 @@ Next.js (App Router) · TypeScript · Tailwind v4 · shadcn/ui · Recharts · Ne
 ## Getting started
 
 ```bash
-cp .env.example .env.local   # fill in DATABASE_URL + GEMINI_API_KEY (prompt 02)
+cp .env.example .env.local   # fill in DATABASE_URL + GEMINI_API_KEY
 pnpm install
+pnpm db:push                  # create the fridge tables (deals, gush_sync, geo_cache)
 pnpm dev
 ```
 
-Open <http://localhost:3000> — `/` is the address input, `/report` the placeholder report.
+Open <http://localhost:3000> — `/` is the address + property form; submit to get the
+report at `/report` (estimated value, comparables, ₪/m² charts, and a Hebrew explanation).
 
-> This is the **prompt 01** skeleton: every external seam is a typed stub that throws
-> clearly when called. No real gov/AI/DB calls happen yet — those arrive in prompts 02/03.
+### The flow
+
+`address` → **geocode** (govmap autocomplete) → **deals** (govmap `street-deals`, the
+nadlan dataset) → **clean** (drop typos/dupes, normalize ₪/m²) → **fridge** (Neon,
+cache-first) → **stats** (`lib/stats`, deterministic) → **narrative** (Gemini, language
+only) → **report**. A repeat search of the same address is served from Neon with zero
+gov calls. The govmap/nadlan endpoints are unofficial — see [`docs/data-sources.md`](./docs/data-sources.md).
 
 ## Scripts
 
@@ -35,7 +42,7 @@ Open <http://localhost:3000> — `/` is the address input, `/report` the placeho
 - `pnpm lint` — ESLint (flat config)
 - `pnpm typecheck` — strict TS check
 - `pnpm db:generate` — generate a Drizzle migration into `drizzle/`
-- `pnpm db:migrate` — apply migrations (needs `DATABASE_URL`, prompt 02)
+- `pnpm db:push` — apply the schema to Neon (needs `DATABASE_URL`)
 
 ## Project layout
 

@@ -8,6 +8,20 @@
       "when": 1781801326824,
       "tag": "0000_daily_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781806686787,
+      "tag": "0001_purple_wendell_vaughn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781807747944,
+      "tag": "0002_gifted_puck",
+      "breakpoints": true
     }
   ]
 }

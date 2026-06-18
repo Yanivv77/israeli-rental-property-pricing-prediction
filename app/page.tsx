@@ -1,51 +1,33 @@
-import Link from "next/link";
+import { Building2 } from "lucide-react";
+import { ValuationForm } from "@/components/valuation-form";
 
 /**
- * Address input — the "waiter" front door. Stub only: the form has no submit
- * logic yet. It navigates to /report via a plain GET so the skeleton is
- * walkable; the real flow (geocode → deals → stats → narrative) is wired in
- * prompts 02/03 as a Server Action.
+ * Front door (the "waiter"): address + subject attributes → /report. The form
+ * is the only client component; this page is a Server Component shell.
  */
 export default function HomePage() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-8 p-6">
-      <header className="space-y-3 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-10 p-6">
+      <header className="flex flex-col items-center gap-4 text-center">
+        <span className="bg-brand-soft text-brand inline-flex size-12 items-center justify-center rounded-2xl">
+          <Building2 className="size-6" aria-hidden />
+        </span>
+        <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">
           הערכת שווי נכס
         </h1>
-        <p className="text-muted-foreground text-balance">
-          הזינו כתובת ונשלוף עבורכם עסקאות אחרונות באותו גוש, נחשב סטטיסטיקה
-          ונסביר בעברית.
+        <p className="text-muted-foreground max-w-md text-balance">
+          הערכה מבוססת עסקאות נדל&quot;ן אמיתיות שבוצעו באותו גוש. החישוב נעשה בקוד —
+          ה‑AI רק מסביר את התוצאה בעברית.
         </p>
       </header>
 
-      <form
-        action="/report"
-        method="get"
-        className="flex flex-col gap-3 sm:flex-row"
-      >
-        <input
-          type="text"
-          name="address"
-          dir="rtl"
-          autoComplete="off"
-          placeholder="לדוגמה: דיזנגוף 100, תל אביב"
-          className="border-input bg-background ring-offset-background focus-visible:ring-ring h-12 w-full rounded-md border px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-        />
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-12 items-center justify-center rounded-md px-6 text-base font-medium transition-colors"
-        >
-          הערכה
-        </button>
-      </form>
+      <section className="bg-card rounded-2xl border p-6 shadow-sm sm:p-7">
+        <ValuationForm />
+      </section>
 
-      <p className="text-muted-foreground text-center text-sm">
-        שלד בלבד — אין כאן עדיין קריאות לשרתי הממשלה או ל‑AI. אפשר לצפות{" "}
-        <Link href="/report" className="underline underline-offset-4">
-          בדף הדוח לדוגמה
-        </Link>
-        .
+      <p className="text-muted-foreground text-center text-xs">
+        מקור הנתונים: עסקאות נדל&quot;ן ממשלתיות (govmap / רשות המיסים). תוצאות נשמרות
+        במטמון לפי גוש לזירוז חיפושים חוזרים.
       </p>
     </main>
   );
