@@ -21,5 +21,8 @@ export default defineConfig({
     url: process.env.DATABASE_URL ?? "",
   },
   verbose: true,
-  strict: true,
+  // strict would force an interactive y/N confirmation on every push, which
+  // needs a TTY (fails in non-interactive shells/CI). Off so `pnpm db:push`
+  // applies non-destructive schema changes directly.
+  strict: false,
 });

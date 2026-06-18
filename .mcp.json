@@ -3,6 +3,10 @@
     "data-gov-il": {
       "command": "npx",
       "args": ["-y", "@iflow-mcp/davidosherproceed-data-gov-il-mcp"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--headless"]
     }
   }
 }
