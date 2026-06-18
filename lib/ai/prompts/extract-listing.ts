@@ -1,2 +1,0 @@
-export const EXTRACT_LISTING_PROMPT_VERSION = 1;
-export const EXTRACT_LISTING_PROMPT = "";

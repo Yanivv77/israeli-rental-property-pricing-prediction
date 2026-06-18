@@ -32,9 +32,16 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 
-# testing
+# testing — hard rule: do NOT commit test files or smoke scripts
 coverage/
 .nyc_output
+/tests/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.smoke.ts
+scripts/smoke/
 
 # editors / OS
 .DS_Store
@@ -62,3 +69,4 @@ Thumbs.db
 gsd.log
 *.gsd
 
+.claude/

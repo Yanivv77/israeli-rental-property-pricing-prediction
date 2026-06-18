@@ -1,2 +1,0 @@
--- 001_init.sql
--- Initial schema.

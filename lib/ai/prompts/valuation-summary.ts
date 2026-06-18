@@ -1,2 +1,0 @@
-export const VALUATION_SUMMARY_PROMPT_VERSION = 1;
-export const VALUATION_SUMMARY_PROMPT = "";

@@ -1,0 +1,13 @@
+# pnpm 11 reads the build-script allowlist here (no longer from package.json).
+# These deps ship native binaries / codegen we need at build & dev time:
+#   esbuild        — drizzle-kit's config loader
+#   unrs-resolver  — eslint-config-next's TypeScript import resolver
+#   sharp          — Next.js image optimization
+#   protobufjs     — transitive of @google/genai
+#   @google/genai  — postinstall
+allowBuilds:
+  '@google/genai': true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
