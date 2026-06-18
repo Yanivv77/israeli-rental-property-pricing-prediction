@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { valuate, type Report } from "@/lib/valuate";
 import { SubjectInputSchema, type Confidence } from "@/types/property";
+import { CBS_RENT, RENT_BY_SIZE, type RentEstimate } from "@/lib/rent/cbs";
 import { PriceTrend, CompsBar } from "@/components/charts/client";
 
 const nis = (n: number | null | undefined) =>
@@ -127,7 +128,7 @@ function StateCard({
 }
 
 function Result({ report }: { report: Extract<Report, { status: "ok" }> }) {
-  const { subject, stats, deals, summary, source } = report;
+  const { subject, stats, rent, deals, summary, source } = report;
   const conf = CONFIDENCE[stats.confidence];
 
   // Serializable chart data (computed server-side; charts only render).
@@ -177,6 +178,8 @@ function Result({ report }: { report: Extract<Report, { status: "ok" }> }) {
         <Stat label="עסקאות משוות" value={String(stats.sampleSize)} sub={`מתוך ${stats.blockSampleSize} בגוש`} />
         <Stat label="רמת ביטחון" badge={conf} />
       </section>
+
+      <RentCard rent={rent} estimatedValue={stats.estimatedValue} />
 
       <section className="bg-card reveal rounded-2xl border p-6">
         <h2 className="mb-1 font-semibold">מחיר למ&quot;ר לאורך זמן</h2>
@@ -251,6 +254,82 @@ function Verdict({ stats }: { stats: Extract<Report, { status: "ok" }>["stats"] 
           מחיר מבוקש: <bdi className="nums font-medium">{nis(stats.askingPrice)}</bdi>
         </p>
       )}
+    </section>
+  );
+}
+
+function RentCard({
+  rent,
+  estimatedValue,
+}: {
+  rent: RentEstimate;
+  estimatedValue: number | null;
+}) {
+  const impliedYield =
+    estimatedValue && rent.monthly ? (rent.monthly * 12) / estimatedValue : null;
+  return (
+    <section className="bg-card reveal rounded-2xl border p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold">שכר דירה חודשי משוער</h2>
+          <p className="text-muted-foreground mt-0.5 max-w-md text-sm">
+            {rent.basis === "city"
+              ? `מבוסס על ממוצע הלמ"ס לדירת 3 חדרים ב${rent.city} (${nis(rent.cityRent3room)}), מותאם לגודל ${rent.sizeGroup} חדרים.`
+              : `ממוצע ארצי לדירת ${rent.sizeGroup} חדרים — אין נתון עירוני בהלמ"ס לאזור זה.`}
+          </p>
+        </div>
+        <p className="nums text-3xl font-bold tracking-tight">
+          <bdi>{nis(rent.monthly)}</bdi>
+        </p>
+      </div>
+
+      {/* The data behind the number: CBS national average rent by dwelling size. */}
+      <div className="mt-5 overflow-hidden rounded-xl border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-muted-foreground text-xs">
+            <tr>
+              <th className="p-2.5 text-start font-medium">גודל דירה (חדרים)</th>
+              <th className="p-2.5 text-start font-medium">שכ&quot;ד חודשי ממוצע ארצי</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RENT_BY_SIZE.map((r) => {
+              const active = r.group === rent.sizeGroup;
+              return (
+                <tr key={r.group} className={`border-t ${active ? "bg-brand-soft text-brand font-semibold" : ""}`}>
+                  <td className="p-2.5">
+                    <bdi>{r.group}</bdi>
+                    {active && <span className="text-brand"> ←</span>}
+                  </td>
+                  <td className="nums p-2.5">
+                    <bdi>{nis(r.rent)}</bdi>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="text-muted-foreground mt-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span className="max-w-md">
+          מקור:{" "}
+          <a
+            href={CBS_RENT.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2"
+          >
+            {CBS_RENT.sourceLabel}
+          </a>
+          , {CBS_RENT.period}. ממוצע אזורי — אינו הערכה לנכס הספציפי.
+        </span>
+        {impliedYield != null && (
+          <span className="bg-muted text-foreground rounded-md px-2.5 py-1 font-medium whitespace-nowrap">
+            תשואה ברוטו משתמעת: <bdi className="nums">{(impliedYield * 100).toFixed(1)}%</bdi>
+          </span>
+        )}
+      </div>
     </section>
   );
 }

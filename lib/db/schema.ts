@@ -51,6 +51,7 @@ export const geoCache = pgTable("geo_cache", {
   polygonId: text("polygon_id"),
   gush: integer("gush"),
   helka: integer("helka"),
+  city: text("city"), // parsed city → CBS rent lookup survives a cache hit
   syncedAt: timestamp("synced_at").defaultNow().notNull(),
 });
 

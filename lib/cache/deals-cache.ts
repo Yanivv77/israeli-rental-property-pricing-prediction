@@ -101,7 +101,7 @@ export async function resolveValuation(
   let helka: number | null;
 
   if (geo && Date.now() - geo.syncedAt.getTime() < GEO_TTL_MS) {
-    address = { raw: rawAddress };
+    address = { raw: rawAddress, city: geo.city ?? undefined }; // city → CBS rent
     point = { x: geo.x, y: geo.y };
     polygonId = geo.polygonId;
     gush = geo.gush;
@@ -154,13 +154,11 @@ export async function resolveValuation(
   }
 
   // 4) Remember the resolution so the next identical search is zero gov calls.
+  const geoRow = { x: point.x, y: point.y, polygonId, gush, helka, city: address.city ?? null, syncedAt: new Date() };
   await db
     .insert(geoCache)
-    .values({ addr: key, x: point.x, y: point.y, polygonId, gush, helka, syncedAt: new Date() })
-    .onConflictDoUpdate({
-      target: geoCache.addr,
-      set: { x: point.x, y: point.y, polygonId, gush, helka, syncedAt: new Date() },
-    });
+    .values({ addr: key, ...geoRow })
+    .onConflictDoUpdate({ target: geoCache.addr, set: geoRow });
 
   return { kind: "ok", address, gush: gush!, helka, deals: out, source };
 }

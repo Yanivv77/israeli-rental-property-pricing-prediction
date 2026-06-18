@@ -1,5 +1,6 @@
 import "server-only";
 import { GoogleGenAI } from "@google/genai";
+import { CBS_RENT, type RentEstimate } from "@/lib/rent/cbs";
 import type { Subject, ValuationStats } from "@/types/property";
 
 /**
@@ -15,7 +16,8 @@ const SYSTEM = `אתה אנליסט נדל"ן ישראלי שמסביר ללקו
 1. אסור לבצע חישוב כלשהו: לא חיבור, לא חיסור, לא כפל, לא חילוק ולא חישוב אחוזים. כל המספרים והאחוזים כבר חושבו עבורך.
 2. כשאתה מזכיר מספר או אחוז — העתק אותו מילה במילה מהנתונים שסופקו. אסור לכתוב מספר או אחוז שאינו מופיע ברשימה.
 3. תפקידך להסביר במילים בלבד האם המחיר המבוקש סביר, ולהתייחס ליתרונות (חניה/מעלית) ולרמת הביטחון של ההערכה.
-4. 3 עד 5 משפטים בעברית. בלי כותרות, בלי רשימות, בלי תגיות. טון מקצועי, מאוזן וברור.`;
+4. הזכר במשפט אחד את שכר הדירה החודשי המשוער (נתון הלמ"ס) — זהו ממוצע אזורי, לא הערכה לנכס הספציפי.
+5. 3 עד 5 משפטים בעברית. בלי כותרות, בלי רשימות, בלי תגיות. טון מקצועי, מאוזן וברור.`;
 
 const nis = (n: number | null | undefined) =>
   n == null ? "לא ידוע" : "₪" + new Intl.NumberFormat("he-IL").format(Math.round(n));
@@ -30,7 +32,7 @@ const CONFIDENCE_HE: Record<string, string> = {
 // Every number the model is allowed to use, pre-formatted as the exact string
 // to copy. No formulas are shown — a formula would invite the model to redo the
 // math (which it must never do).
-function facts(stats: ValuationStats, subject: Subject): string {
+function facts(stats: ValuationStats, subject: Subject, rent: RentEstimate): string {
   const a = subject.area;
   const dir =
     stats.deltaPct == null
@@ -58,6 +60,8 @@ function facts(stats: ValuationStats, subject: Subject): string {
     `מספר עסקאות משוות: ${stats.sampleSize}`,
     `מספר עסקאות בגוש: ${stats.blockSampleSize}`,
     `רמת ביטחון: ${CONFIDENCE_HE[stats.confidence] ?? stats.confidence}`,
+    `שכר דירה חודשי משוער (הלמ"ס, ${CBS_RENT.period}): ${nis(rent.monthly)}` +
+      (rent.basis === "city" ? ` (ממוצע ${rent.city})` : " (ממוצע ארצי לפי גודל)"),
   ]
     .filter(Boolean)
     .join("\n");
@@ -66,6 +70,7 @@ function facts(stats: ValuationStats, subject: Subject): string {
 export async function generateSummary(
   stats: ValuationStats,
   subject: Subject,
+  rent: RentEstimate,
 ): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY not set");
@@ -73,7 +78,7 @@ export async function generateSummary(
   const ai = new GoogleGenAI({ apiKey: key });
   const res = await ai.models.generateContent({
     model: MODEL,
-    contents: `הנתונים שכבר חושבו (השתמש אך ורק במספרים האלה, כפי שהם):\n${facts(stats, subject)}\n\nכתוב הסבר קצר בעברית: האם המחיר המבוקש מוצדק? הסבר במילים, בלי לחשב מספרים חדשים.`,
+    contents: `הנתונים שכבר חושבו (השתמש אך ורק במספרים האלה, כפי שהם):\n${facts(stats, subject, rent)}\n\nכתוב הסבר קצר בעברית: האם המחיר המבוקש מוצדק? הסבר במילים, בלי לחשב מספרים חדשים.`,
     config: { systemInstruction: SYSTEM, temperature: 0, maxOutputTokens: 400 },
   });
 

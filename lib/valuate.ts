@@ -1,6 +1,7 @@
 import "server-only";
 import { resolveValuation } from "@/lib/cache/deals-cache";
 import { computeStats } from "@/lib/stats/valuation";
+import { estimateRent, type RentEstimate } from "@/lib/rent/cbs";
 import { generateSummary } from "@/lib/ai/summary";
 import {
   SubjectInputSchema,
@@ -22,6 +23,7 @@ export type Report =
       status: "ok";
       subject: Subject;
       stats: ValuationStats;
+      rent: RentEstimate;
       deals: Deal[];
       summary: string;
       source: "cache" | "gov";
@@ -64,15 +66,16 @@ export async function valuate(input: SubjectInput): Promise<Report> {
     };
 
     const stats = computeStats(r.deals, subject);
+    const rent = estimateRent(subject); // CBS area-average rent (deterministic)
 
     let summary: string;
     try {
-      summary = await generateSummary(stats, subject);
+      summary = await generateSummary(stats, subject, rent);
     } catch {
       summary = fallbackSummary(stats); // AI down → ship the numbers anyway
     }
 
-    return { status: "ok", subject, stats, deals: r.deals, summary, source: r.source };
+    return { status: "ok", subject, stats, rent, deals: r.deals, summary, source: r.source };
   } catch {
     return {
       status: "error",
