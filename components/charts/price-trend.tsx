@@ -19,6 +19,40 @@ const month = (t: number) =>
   new Date(t).toLocaleDateString("he-IL", { month: "2-digit", year: "2-digit" });
 const full = (n: number) => "₪" + new Intl.NumberFormat("he-IL").format(Math.round(n));
 
+// Custom tooltip: read the point's own ₪/m² so the X-axis timestamp is never
+// mistaken for a price (a scatter passes both axis values to the default tooltip).
+function TrendTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: Point }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div
+      style={{
+        direction: "rtl",
+        borderRadius: 12,
+        border: "1px solid var(--border)",
+        background: "var(--popover)",
+        color: "var(--popover-foreground)",
+        fontSize: 13,
+        padding: "8px 12px",
+      }}
+    >
+      <div style={{ color: "var(--muted-foreground)", marginBottom: 4 }}>
+        {new Date(d.t).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })}
+      </div>
+      <div>
+        מחיר למ&quot;ר: <strong>{full(d.ppsqm)}</strong>
+      </div>
+      {d.label ? <div style={{ color: "var(--muted-foreground)" }}>{d.label}</div> : null}
+    </div>
+  );
+}
+
 /** ₪/m² of each block transaction over time, with the median as a reference. */
 export function PriceTrend({ data, median }: { data: Point[]; median: number | null }) {
   return (
@@ -50,21 +84,7 @@ export function PriceTrend({ data, median }: { data: Point[]; median: number | n
               label={{ value: `חציון ${compact(median)}`, fontSize: 11, fill: "var(--brand)", position: "insideTopRight" }}
             />
           )}
-          <Tooltip
-            cursor={{ stroke: "var(--border)" }}
-            contentStyle={{
-              direction: "rtl",
-              borderRadius: 12,
-              border: "1px solid var(--border)",
-              background: "var(--popover)",
-              color: "var(--popover-foreground)",
-              fontSize: 13,
-            }}
-            formatter={(v) => [full(Number(v)), 'מחיר למ"ר']}
-            labelFormatter={(t) =>
-              new Date(Number(t)).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })
-            }
-          />
+          <Tooltip cursor={{ stroke: "var(--border)" }} content={<TrendTooltip />} />
           <Scatter data={data} fill="var(--brand)" isAnimationActive={false} fillOpacity={0.7} />
         </ScatterChart>
       </ResponsiveContainer>
