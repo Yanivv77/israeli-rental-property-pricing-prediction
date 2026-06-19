@@ -23,12 +23,7 @@ a CBS-based monthly rent, ₪/m² charts, the comparable deals the numbers came 
 and a Hebrew explanation that cites those exact figures — plus graceful states for
 *no match*, *ambiguous address*, *no data*, and *service outage*.
 
-<table>
-<tr>
-<td width="62%"><img src="docs/screenshots/report-desktop.png" alt="Valuation report — desktop" /></td>
-<td width="38%"><img src="docs/screenshots/report-mobile.png" alt="Valuation report — mobile" /></td>
-</tr>
-</table>
+<img src="docs/screenshots/report-desktop.png" width="820" alt="Valuation report" />
 
 ---
 
