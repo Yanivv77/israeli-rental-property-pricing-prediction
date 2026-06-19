@@ -48,6 +48,8 @@ const RawDealSchema = z.object({
   dealDate: z.string().nullish(),
   gushNum: z.coerce.number().nullish(),
   parcelNum: z.coerce.number().nullish(),
+  propertyTypeDescription: z.string().nullish(),
+  dealNatureDescription: z.string().nullish(),
 });
 const StreetDealsSchema = z.object({ data: z.array(z.unknown()).default([]) });
 
@@ -90,6 +92,16 @@ function stableId(parts: (string | number | null | undefined)[]): string {
 const MIN_PPSQM = 3_000;
 const MAX_PPSQM = 250_000;
 
+// Keep dwellings only. Shops/offices/warehouses/parking/land/whole-buildings
+// price very differently per m² and aren't comparable to an apartment — they're
+// what drags a block's ₪/m² far below the residential market. Blocklist (not an
+// allowlist) so residential variants (apartment, house, penthouse, cottage) and
+// untyped rows are kept; only clearly non-residential is dropped.
+const NON_RESIDENTIAL =
+  /חנות|משרד|מחסן|מסחר|תעשי|חניה|חנייה|קומבינציה|מגרש|קרקע|בניין|בנין|מלון/;
+const isResidential = (type?: string | null, nature?: string | null) =>
+  !NON_RESIDENTIAL.test(`${type ?? ""} ${nature ?? ""}`);
+
 export const nadlanDeals: DealsProvider = {
   async resolveBlock(point, houseNumber) {
     for (const radius of [50, 150, 500]) {
@@ -128,6 +140,7 @@ export const nadlanDeals: DealsProvider = {
       if (ppsqm < MIN_PPSQM || ppsqm > MAX_PPSQM) continue;
       if (date && (isNaN(+date) || +date > Date.now() || +date < cutoff)) continue;
       if (d.gushNum == null) continue; // gush is the block key — required
+      if (!isResidential(d.propertyTypeDescription, d.dealNatureDescription)) continue; // dwellings only
 
       const id = stableId([d.gushNum, d.parcelNum, d.dealDate, amount, area, d.floorNo]);
       if (seen.has(id)) continue;
