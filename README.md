@@ -5,7 +5,7 @@ rent** — each grounded in real government data, computed in code, and explaine
 plain Hebrew. Built with Next.js (App Router), TypeScript, Tailwind v4, Neon
 Postgres, and Gemini.
 
-**Live demo:** https://israeli-rental-property-pricing-prediction-k9rnf0e1t.vercel.app
+**Live demo:** https://israeli-rental-property-pricing-pre.vercel.app
 
 <img src="docs/screenshots/home.png" width="760" alt="Address + property input form (RTL Hebrew)" />
 
