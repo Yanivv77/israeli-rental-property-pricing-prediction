@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { GoogleGenAI } from "@google/genai";
 import { getCachedSummary, storeSummary } from "@/lib/cache/deals-cache";
 import { CBS_RENT, type RentEstimate } from "@/lib/rent/cbs";
-import type { Subject, ValuationStats } from "@/types/property";
+import { CONDITION_LABELS, type Subject, type ValuationStats } from "@/types/property";
 
 /**
  * Gemini writes a human Hebrew explanation of the already-computed numbers.
@@ -55,6 +55,9 @@ function facts(stats: ValuationStats, subject: Subject, rent: RentEstimate): str
     `מחיר מבוקש: ${nis(stats.askingPrice)}`,
     `מחיר חציוני למ"ר בגוש: ${nis(stats.pricePerSqmMedian)}`,
     `שווי מוערך לנכס: ${nis(stats.estimatedValue)}`,
+    stats.conditionFactor !== 1 && subject.condition
+      ? `כולל התאמה למצב הנכס (${CONDITION_LABELS[subject.condition]}): ${stats.conditionFactor > 1 ? "+" : "−"}${Math.abs(Math.round((stats.conditionFactor - 1) * 100))}%`
+      : null,
     stats.deltaPct != null
       ? `אחוז הפער בין המבוקש למוערך: ${(stats.deltaPct * 100).toFixed(1)}%`
       : null,

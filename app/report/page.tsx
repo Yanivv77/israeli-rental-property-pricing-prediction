@@ -9,7 +9,7 @@ import {
   Minus,
 } from "lucide-react";
 import { valuate, type Report } from "@/lib/valuate";
-import { SubjectInputSchema, type Confidence } from "@/types/property";
+import { SubjectInputSchema, CONDITION_LABELS, type Confidence } from "@/types/property";
 import { CBS_RENT, RENT_BY_SIZE, type RentEstimate } from "@/lib/rent/cbs";
 import { PriceTrend, CompsBar } from "@/components/charts/client";
 
@@ -163,7 +163,7 @@ function Result({ report }: { report: Extract<Report, { status: "ok" }> }) {
         <SourceBadge source={source} />
       </header>
 
-      <Verdict stats={stats} />
+      <Verdict stats={stats} subject={subject} />
 
       <section className="bg-card reveal rounded-2xl border p-6">
         <h2 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
@@ -202,7 +202,13 @@ function Result({ report }: { report: Extract<Report, { status: "ok" }> }) {
   );
 }
 
-function Verdict({ stats }: { stats: Extract<Report, { status: "ok" }>["stats"] }) {
+function Verdict({
+  stats,
+  subject,
+}: {
+  stats: Extract<Report, { status: "ok" }>["stats"];
+  subject: Extract<Report, { status: "ok" }>["subject"];
+}) {
   const pct = stats.deltaPct;
   // Headline number + verdict tone. Falls back gracefully when inputs are sparse.
   let tone = "brand";
@@ -252,6 +258,18 @@ function Verdict({ stats }: { stats: Extract<Report, { status: "ok" }>["stats"] 
       {stats.askingPrice != null && (
         <p className="text-muted-foreground mt-1 text-sm">
           מחיר מבוקש: <bdi className="nums font-medium">{nis(stats.askingPrice)}</bdi>
+        </p>
+      )}
+      {stats.conditionFactor !== 1 && subject.condition && (
+        <p className="text-muted-foreground mt-1 text-sm">
+          כולל התאמה למצב הנכס:{" "}
+          <span className="text-foreground font-medium">{CONDITION_LABELS[subject.condition]}</span>{" "}
+          (
+          <bdi className="nums">
+            {stats.conditionFactor > 1 ? "+" : "−"}
+            {Math.abs(Math.round((stats.conditionFactor - 1) * 100))}%
+          </bdi>
+          )
         </p>
       )}
     </section>
@@ -379,7 +397,12 @@ function SourceBadge({ source }: { source: "cache" | "gov" }) {
 function CompsTable({ deals }: { deals: Extract<Report, { status: "ok" }>["deals"] }) {
   return (
     <section className="bg-card reveal overflow-hidden rounded-2xl border">
-      <h2 className="border-b p-6 pb-4 font-semibold">עסקאות אחרונות בגוש</h2>
+      <div className="border-b p-6 pb-4">
+        <h2 className="font-semibold">עסקאות אחרונות בגוש</h2>
+        <p className="text-muted-foreground mt-1 text-xs">
+          דירות מגורים בלבד · אינן מותאמות לגיל או למצב המבנה
+        </p>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-muted-foreground bg-muted/40 text-xs">

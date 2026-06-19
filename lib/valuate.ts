@@ -63,6 +63,7 @@ export async function valuate(input: SubjectInput): Promise<Report> {
       askingPrice: s.askingPrice,
       parking: s.parking,
       elevator: s.elevator,
+      condition: s.condition,
     };
 
     const stats = computeStats(r.deals, subject);

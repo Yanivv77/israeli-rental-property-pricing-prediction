@@ -72,6 +72,21 @@ export const DealSchema = z.object({
 });
 export type Deal = z.infer<typeof DealSchema>;
 
+/**
+ * Building condition/age — a user-set knob the comparable deals can't capture
+ * (the sale data has no build year or condition). Applies a transparent
+ * adjustment to the estimate; see CONDITION_LABELS for the factor.
+ */
+export const PropertyConditionSchema = z.enum(["renovated", "standard", "needs_renovation"]);
+export type PropertyCondition = z.infer<typeof PropertyConditionSchema>;
+
+/** Hebrew label per condition (the % adjustment itself lives in lib/stats). */
+export const CONDITION_LABELS: Record<PropertyCondition, string> = {
+  renovated: "משופץ",
+  standard: "סטנדרטי",
+  needs_renovation: "דורש שיפוץ",
+};
+
 /** The property being valued (the user's subject apartment). */
 export const SubjectSchema = z.object({
   address: AddressSchema,
@@ -82,6 +97,7 @@ export const SubjectSchema = z.object({
   askingPrice: z.number().positive().optional(), // ₪ — the price to judge against the computed value
   parking: z.boolean().optional(),
   elevator: z.boolean().optional(),
+  condition: PropertyConditionSchema.optional(),
 });
 export type Subject = z.infer<typeof SubjectSchema>;
 
@@ -102,6 +118,7 @@ export const SubjectInputSchema = z.object({
   askingPrice: optPos,
   parking: z.coerce.boolean().optional(), // only sent when checked → never "false"
   elevator: z.coerce.boolean().optional(),
+  condition: z.preprocess(blankToUndef, PropertyConditionSchema.optional()),
 });
 export type SubjectInput = z.infer<typeof SubjectInputSchema>;
 
@@ -119,7 +136,8 @@ export const ValuationStatsSchema = z.object({
   pricePerSqmMedian: z.number().nullable(), // median ₪/m² of the comparables
   pricePerSqmMean: z.number().nullable(),
   pricePerSqmStdDev: z.number().nullable(),
-  estimatedValue: z.number().nullable(), // subject area × median ₪/m²
+  estimatedValue: z.number().nullable(), // subject area × median ₪/m² × condition factor
+  conditionFactor: z.number(), // applied condition adjustment (1 = none)
   askingPrice: z.number().nullable(), // echoed from the subject, for the narrative
   deltaVsEstimate: z.number().nullable(), // asking − estimated (₪); >0 = above fair value
   deltaPct: z.number().nullable(), // delta as a fraction of estimated value

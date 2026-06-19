@@ -52,6 +52,15 @@ function confidenceFor(n: number): Confidence {
   return "insufficient";
 }
 
+// User-set condition adjustment. The sale comps can't see building age/condition,
+// so this is an explicit, transparent factor (not derived from data).
+// Keep keys in sync with CONDITION_LABELS in types/property.ts.
+const CONDITION_FACTOR: Record<string, number> = {
+  renovated: 1.08, // +8%
+  standard: 1.0,
+  needs_renovation: 0.88, // −12%
+};
+
 export function computeStats(deals: Deal[], subject: Subject): ValuationStats {
   const valid = deals.filter((d) => ppsqm(d) != null);
   const comps = selectComps(valid, subject);
@@ -60,8 +69,11 @@ export function computeStats(deals: Deal[], subject: Subject): ValuationStats {
   const med = median(compPrices);
   const { mean, std } = meanStd(compPrices);
 
+  const conditionFactor = subject.condition ? (CONDITION_FACTOR[subject.condition] ?? 1) : 1;
   const estimatedValue =
-    subject.area != null && med != null ? Math.round(subject.area * med) : null;
+    subject.area != null && med != null
+      ? Math.round(subject.area * med * conditionFactor)
+      : null;
   const askingPrice = subject.askingPrice ?? null;
   const deltaVsEstimate =
     askingPrice != null && estimatedValue != null ? askingPrice - estimatedValue : null;
@@ -75,6 +87,7 @@ export function computeStats(deals: Deal[], subject: Subject): ValuationStats {
     pricePerSqmMean: mean != null ? Math.round(mean) : null,
     pricePerSqmStdDev: std != null ? Math.round(std) : null,
     estimatedValue,
+    conditionFactor,
     askingPrice,
     deltaVsEstimate,
     deltaPct,

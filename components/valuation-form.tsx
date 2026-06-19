@@ -88,6 +88,24 @@ export function ValuationForm() {
         ))}
       </fieldset>
 
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="condition" className="text-muted-foreground text-xs font-medium">
+          מצב הנכס (מתאים את ההערכה)
+        </label>
+        <select
+          id="condition"
+          name="condition"
+          dir="rtl"
+          defaultValue=""
+          className="border-input bg-background focus-visible:border-brand focus-visible:ring-brand/30 h-11 w-full rounded-lg border px-3 text-sm outline-none transition-colors focus-visible:ring-4"
+        >
+          <option value="">לא צוין</option>
+          <option value="renovated">משופץ (+8%)</option>
+          <option value="standard">סטנדרטי</option>
+          <option value="needs_renovation">דורש שיפוץ (−12%)</option>
+        </select>
+      </div>
+
       <div className="flex flex-wrap gap-3">
         {[
           { name: "parking", label: "חניה" },
